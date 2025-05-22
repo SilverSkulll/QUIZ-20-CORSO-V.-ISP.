@@ -50,6 +50,7 @@ function App() {
       setScore(score + 1)
     } else {
       setMistakes([...mistakes, {
+        index: step + 1,
         domanda: q.domanda,
         tua: q['risposta' + choice],
         corretta: q['risposta' + q.corretta]
@@ -63,8 +64,9 @@ function App() {
   }
 
   const downloadResult = () => {
-    const text = `Risultato: ${score} su ${selectedQuestions.length}\n\nErrori:\n` +
-      mistakes.map(m => `Domanda: ${m.domanda}\nTua risposta: ${m.tua}\nCorretta: ${m.corretta}\n`).join('\n')
+    const percent = ((score / selectedQuestions.length) * 100).toFixed(2)
+    const text = `Risultato: ${score} su ${selectedQuestions.length} (${percent}%)\n\nErrori:\n` +
+      mistakes.map(m => `Domanda ${m.index}: ${m.domanda}\nTua risposta: ${m.tua}\nCorretta: ${m.corretta}\n`).join('\n')
     const blob = new Blob([text], { type: 'text/plain' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
@@ -97,15 +99,17 @@ function App() {
   if (!selectedQuestions.length) return <p>Caricamento…</p>
 
   if (showResult) {
+    const percent = ((score / selectedQuestions.length) * 100).toFixed(2)
     return (
       <div>
-        <h1>Hai totalizzato {score} su {selectedQuestions.length}</h1>
+        <h1>Hai totalizzato {score} su {selectedQuestions.length} ({percent}%)</h1>
         <button onClick={downloadResult}>Scarica risultato</button>
         <button onClick={() => setShowSetup(true)}>Ricomincia</button>
         <h2>Rivedi le risposte sbagliate:</h2>
         {mistakes.map((m, i) => (
           <div key={i}>
-            <p><strong>{m.domanda}</strong></p>
+            <p><strong>❌ Domanda {m.index}</strong></p>
+            <p>{m.domanda}</p>
             <p>❌ Tua risposta: {m.tua}</p>
             <p>✅ Corretta: {m.corretta}</p>
           </div>

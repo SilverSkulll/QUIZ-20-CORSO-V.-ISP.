@@ -1,6 +1,6 @@
 {
-  "name": "quiz-20-corso-v-isp",
-  "version": "1.0.0",
+  "name": "quiz-20-corso-v-isp-v2",
+  "version": "2.0.0",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
