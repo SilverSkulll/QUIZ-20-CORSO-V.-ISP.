@@ -8,11 +8,11 @@ function App() {
   const [answers, setAnswers] = useState([])
   const [step, setStep] = useState(0)
   const [showResult, setShowResult] = useState(false)
-  const [mistakes, setMistakes] = useState([])
-  const [quizStarted, setQuizStarted] = useState(false)
+  const [reviewMode, setReviewMode] = useState(false)
   const [numQuestions, setNumQuestions] = useState(10)
   const [timeLimit, setTimeLimit] = useState(10)
   const [timer, setTimer] = useState(0)
+  const [started, setStarted] = useState(false)
 
   useEffect(() => {
     fetch('/quiz_domande_200.csv')
@@ -28,24 +28,22 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (quizStarted && timer > 0) {
+    if (started && timer > 0 && !showResult) {
       const countdown = setInterval(() => setTimer(t => t - 1), 1000)
       return () => clearInterval(countdown)
     }
-    if (timer === 0 && quizStarted) {
-      calculateResult()
+    if (timer === 0 && started && !showResult) {
+      handleFinish()
     }
-  }, [timer, quizStarted])
+  }, [timer, started, showResult])
 
   const startQuiz = () => {
     const shuffled = [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, numQuestions)
     setSelectedQuestions(shuffled)
     setAnswers(Array(shuffled.length).fill(null))
     setStep(0)
-    setShowResult(false)
-    setMistakes([])
     setTimer(timeLimit * 60)
-    setQuizStarted(true)
+    setStarted(true)
   }
 
   const handleAnswer = (letter) => {
@@ -54,64 +52,62 @@ function App() {
     setAnswers(updated)
   }
 
-  const calculateResult = () => {
-    let score = 0
-    let errors = []
-    selectedQuestions.forEach((q, idx) => {
-      if (answers[idx] === q.Corretta) {
-        score++
-      } else {
-        errors.push({
-          index: idx + 1,
-          domanda: q.Domanda,
-          tua: q["Risposta_" + answers[idx]],
-          corretta: q["Risposta_" + q.Corretta]
-        })
-      }
-    })
-    setMistakes(errors)
+  const handleFinish = () => {
     setShowResult(true)
   }
 
-  if (!quizStarted) {
+  const correctAnswer = (question) => question.Corretta
+
+  if (!started) {
     return (
       <div className="container">
-        <h1>QUIZ 20^ CORSO V. ISP.</h1>
-        <label>Numero domande:
-          <select value={numQuestions} onChange={(e) => setNumQuestions(Number(e.target.value))}>
-            {[...Array(10)].map((_, i) => (
-              <option key={i} value={(i + 1) * 10}>{(i + 1) * 10}</option>
-            ))}
-          </select>
-        </label>
-        <br />
-        <label>Timer (minuti):
-          <select value={timeLimit} onChange={(e) => setTimeLimit(Number(e.target.value))}>
-            {[...Array(10)].map((_, i) => (
-              <option key={i} value={(i + 1) * 10}>{(i + 1) * 10}</option>
-            ))}
-          </select>
-        </label>
-        <br /><br />
-        <button onClick={startQuiz}>Inizia Test</button>
+        <div className="card">
+          <h1>QUIZ 20^ CORSO V. ISP.</h1>
+          <label>Numero domande:
+            <select value={numQuestions} onChange={(e) => setNumQuestions(Number(e.target.value))}>
+              {[...Array(20)].map((_, i) => (
+                <option key={i} value={(i + 1) * 10}>{(i + 1) * 10}</option>
+              ))}
+            </select>
+          </label>
+          <br /><br />
+          <label>Timer (minuti):
+            <select value={timeLimit} onChange={(e) => setTimeLimit(Number(e.target.value))}>
+              {[...Array(10)].map((_, i) => (
+                <option key={i} value={(i + 1) * 10}>{(i + 1) * 10}</option>
+              ))}
+            </select>
+          </label>
+          <br /><br />
+          <button onClick={startQuiz}>Inizia Test</button>
+        </div>
       </div>
     )
   }
 
-  if (showResult) {
-    const score = selectedQuestions.length - mistakes.length
-    const percent = ((score / selectedQuestions.length) * 100).toFixed(2)
+  if (showResult && reviewMode) {
     return (
       <div className="container">
-        <h1>Hai totalizzato {score} su {selectedQuestions.length} ({percent}%)</h1>
-        <button onClick={() => setQuizStarted(false)}>Ricomincia</button>
+        <h2>📘 Rivedi il Test</h2>
         <div className="scroll-container">
-          {mistakes.map((m, i) => (
-            <div key={i} className="card">
-              <p><strong>❌ Domanda {m.index}</strong></p>
-              <p>{m.domanda}</p>
-              <p><strong>Tua risposta:</strong> {m.tua || 'Nessuna risposta'}</p>
-              <p><strong>Corretta:</strong> {m.corretta}</p>
+          {selectedQuestions.map((q, idx) => (
+            <div key={idx} className="card">
+              <div className="question">Domanda {idx + 1}: {q.Domanda}</div>
+              {["A", "B", "C"].map(letter => {
+                const isCorrect = letter === correctAnswer(q)
+                const isGiven = answers[idx] === letter
+                return (
+                  <div key={letter} className="answer">
+                    <span style={{
+                      fontWeight: 'bold',
+                      color: isCorrect ? 'green' : (isGiven ? 'red' : 'black')
+                    }}>
+                      {letter}) {q["Risposta_" + letter]}
+                      {isCorrect ? ' ✅' : ''}{isGiven && !isCorrect ? ' ❌' : ''}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           ))}
         </div>
@@ -119,15 +115,30 @@ function App() {
     )
   }
 
+  if (showResult) {
+    const score = selectedQuestions.reduce((acc, q, i) => acc + (answers[i] === q.Corretta ? 1 : 0), 0)
+    const percent = ((score / selectedQuestions.length) * 100).toFixed(2)
+    return (
+      <div className="container">
+        <div className="card">
+          <h2>✅ Hai totalizzato {score} su {selectedQuestions.length} ({percent}%)</h2>
+          <button onClick={() => window.location.reload()}>Ricomincia</button>
+          <button onClick={() => setReviewMode(true)}>📘 RIVEDI IL TEST</button>
+        </div>
+      </div>
+    )
+  }
+
   const q = selectedQuestions[step]
   const userAnswer = answers[step]
-  const isLast = step === selectedQuestions.length - 1
 
   return (
     <div className="container">
       <div className="card">
         <div className="question">Domanda {step + 1}: {q.Domanda}</div>
-        <div style={{ marginBottom: '1rem', fontWeight: 'bold' }}>⏱️ Tempo rimasto: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</div>
+        <div style={{ marginBottom: '1rem', fontWeight: 'bold' }}>
+          ⏱️ Tempo: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}
+        </div>
         {["A", "B", "C"].map(letter => {
           const isCorrect = letter === q.Corretta
           const isSelected = userAnswer === letter
@@ -141,11 +152,10 @@ function App() {
                   width: '100%',
                   textAlign: 'left',
                   padding: '10px',
-                  fontSize: '1.2rem',
+                  fontSize: '1.1rem',
                   border: '1px solid #ccc',
                   borderRadius: '5px',
-                  marginBottom: '0.5rem',
-                  cursor: 'pointer'
+                  marginBottom: '0.5rem'
                 }}
                 onClick={() => handleAnswer(letter)}
               >
@@ -155,11 +165,11 @@ function App() {
           )
         })}
         <div>
-          <button onClick={() => setStep(prev => prev - 1)} disabled={step === 0}>⬅ Indietro</button>
-          {isLast ? (
-            <button onClick={calculateResult}>✅ RISULTATI</button>
+          <button onClick={() => setStep(step - 1)} disabled={step === 0}>⬅ Indietro</button>
+          {step === selectedQuestions.length - 1 ? (
+            <button onClick={handleFinish}>✅ RISULTATI</button>
           ) : (
-            <button onClick={() => setStep(prev => prev + 1)} disabled={answers[step] === null}>Avanti ➡</button>
+            <button onClick={() => setStep(step + 1)} disabled={answers[step] === null}>Avanti ➡</button>
           )}
         </div>
       </div>
