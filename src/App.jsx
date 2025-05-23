@@ -21,7 +21,8 @@ function App() {
         Papa.parse(csv, {
           header: true,
           complete: results => {
-            setAllQuestions(results.data.filter(q => q.Domanda))
+            const filtered = results.data.filter(q => q.Domanda && q.Risposta_A && q.Risposta_B && q.Risposta_C && q.Corretta)
+            setAllQuestions(filtered)
           }
         })
       })
@@ -55,8 +56,6 @@ function App() {
   const handleFinish = () => {
     setShowResult(true)
   }
-
-  const correctAnswer = (question) => question.Corretta
 
   if (!started) {
     return (
@@ -94,7 +93,7 @@ function App() {
             <div key={idx} className="card">
               <div className="question">Domanda {idx + 1}: {q.Domanda}</div>
               {["A", "B", "C"].map(letter => {
-                const isCorrect = letter === correctAnswer(q)
+                const isCorrect = letter === q.Corretta
                 const isGiven = answers[idx] === letter
                 return (
                   <div key={letter} className="answer">
