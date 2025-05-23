@@ -9,6 +9,7 @@ function App() {
   const [step, setStep] = useState(0)
   const [showResult, setShowResult] = useState(false)
   const [mistakes, setMistakes] = useState([])
+  const [locked, setLocked] = useState(false)
 
   useEffect(() => {
     fetch('/quiz_domande_200.csv')
@@ -30,12 +31,15 @@ function App() {
     setStep(0)
     setShowResult(false)
     setMistakes([])
+    setLocked(false)
   }
 
-  const selectAnswer = (letter) => {
+  const handleAnswer = (letter) => {
+    if (locked) return
     const updated = [...answers]
     updated[step] = letter
     setAnswers(updated)
+    setLocked(true)
   }
 
   const calculateResult = () => {
@@ -88,36 +92,47 @@ function App() {
   }
 
   const q = selectedQuestions[step]
+  const userAnswer = answers[step]
+  const isLast = step === selectedQuestions.length - 1
 
   return (
     <div className="container">
       <div className="card">
         <div className="question">Domanda {step + 1}: {q.Domanda}</div>
-        {["A", "B", "C"].map(letter => (
-          <div key={letter} className="answer">
-            <button
-              onClick={() => selectAnswer(letter)}
-              style={{
-                backgroundColor: answers[step] === letter ? '#cce5ff' : 'white',
-                width: '100%',
-                textAlign: 'left',
-                padding: '10px',
-                fontSize: '1.1rem',
-                border: '1px solid #ccc',
-                borderRadius: '5px',
-                marginBottom: '0.5rem'
-              }}
-            >
-              {letter}) {q["Risposta_" + letter]}
-            </button>
-          </div>
-        ))}
+        {["A", "B", "C"].map(letter => {
+          const isCorrect = letter === q.Corretta
+          const isSelected = userAnswer === letter
+          const style = {
+            backgroundColor:
+              userAnswer
+                ? isCorrect ? '#d4edda' : (isSelected ? '#f8d7da' : 'white')
+                : 'white',
+            width: '100%',
+            textAlign: 'left',
+            padding: '10px',
+            fontSize: '1.1rem',
+            border: '1px solid #ccc',
+            borderRadius: '5px',
+            marginBottom: '0.5rem',
+            cursor: locked ? 'default' : 'pointer'
+          }
+          return (
+            <div key={letter} className="answer">
+              <button
+                style={style}
+                onClick={() => handleAnswer(letter)}
+              >
+                {letter}) {q["Risposta_" + letter]}
+              </button>
+            </div>
+          )
+        })}
         <div>
-          <button onClick={() => setStep(prev => prev - 1)} disabled={step === 0}>⬅ Indietro</button>
-          {step < selectedQuestions.length - 1 ? (
-            <button onClick={() => setStep(prev => prev + 1)}>Avanti ➡</button>
+          <button onClick={() => { setStep(prev => prev - 1); setLocked(false); }} disabled={step === 0}>⬅ Indietro</button>
+          {isLast ? (
+            <button onClick={calculateResult}>✅ RISULTATI</button>
           ) : (
-            <button onClick={calculateResult}>Concludi Test</button>
+            <button onClick={() => { setStep(prev => prev + 1); setLocked(false); }} disabled={!userAnswer}>Avanti ➡</button>
           )}
         </div>
       </div>
