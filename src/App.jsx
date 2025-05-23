@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import Papa from 'papaparse'
+import './style.css'
 
 function App() {
   const [allQuestions, setAllQuestions] = useState([])
   const [selectedQuestions, setSelectedQuestions] = useState([])
+  const [answers, setAnswers] = useState([])
   const [step, setStep] = useState(0)
-  const [score, setScore] = useState(0)
-  const [showSetup, setShowSetup] = useState(true)
   const [showResult, setShowResult] = useState(false)
   const [mistakes, setMistakes] = useState([])
-  const [numQuestions, setNumQuestions] = useState(10)
-  const [timeLimit, setTimeLimit] = useState(600)
-  const [timeLeft, setTimeLeft] = useState(0)
 
   useEffect(() => {
     fetch('/quiz_domande_200.csv')
@@ -19,120 +16,111 @@ function App() {
       .then(csv => {
         Papa.parse(csv, {
           header: true,
-          complete: results => setAllQuestions(results.data)
+          complete: results => {
+            setAllQuestions(results.data.filter(q => q.Domanda))
+          }
         })
       })
   }, [])
 
-  useEffect(() => {
-    if (!showSetup && timeLeft > 0 && !showResult) {
-      const timer = setInterval(() => setTimeLeft(t => t - 1), 1000)
-      return () => clearInterval(timer)
-    } else if (timeLeft === 0 && !showResult && selectedQuestions.length > 0) {
-      setShowResult(true)
-    }
-  }, [timeLeft, showSetup, showResult])
-
   const startQuiz = () => {
-    const shuffled = [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, numQuestions)
+    const shuffled = [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, 10)
     setSelectedQuestions(shuffled)
+    setAnswers(Array(shuffled.length).fill(null))
     setStep(0)
-    setScore(0)
-    setMistakes([])
     setShowResult(false)
-    setTimeLeft(timeLimit)
-    setShowSetup(false)
+    setMistakes([])
   }
 
-  const handleAnswer = (choice) => {
-    const q = selectedQuestions[step]
-    if (choice === q.corretta) {
-      setScore(score + 1)
-    } else {
-      setMistakes([...mistakes, {
-        index: step + 1,
-        domanda: q.domanda,
-        tua: q['risposta' + choice],
-        corretta: q['risposta' + q.corretta]
-      }])
-    }
-    if (step + 1 < selectedQuestions.length) {
-      setStep(step + 1)
-    } else {
-      setShowResult(true)
-    }
+  const selectAnswer = (letter) => {
+    const updated = [...answers]
+    updated[step] = letter
+    setAnswers(updated)
   }
 
-  const downloadResult = () => {
-    const percent = ((score / selectedQuestions.length) * 100).toFixed(2)
-    const text = `Risultato: ${score} su ${selectedQuestions.length} (${percent}%)\n\nErrori:\n` +
-      mistakes.map(m => `Domanda ${m.index}: ${m.domanda}\nTua risposta: ${m.tua}\nCorretta: ${m.corretta}\n`).join('\n')
-    const blob = new Blob([text], { type: 'text/plain' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = 'risultato_quiz.txt'
-    a.click()
+  const calculateResult = () => {
+    let score = 0
+    let errors = []
+    selectedQuestions.forEach((q, idx) => {
+      if (answers[idx] === q.Corretta) {
+        score++
+      } else {
+        errors.push({
+          index: idx + 1,
+          domanda: q.Domanda,
+          tua: q["Risposta_" + answers[idx]],
+          corretta: q["Risposta_" + q.Corretta]
+        })
+      }
+    })
+    setMistakes(errors)
+    setShowResult(true)
   }
 
-  if (showSetup) {
+  if (!selectedQuestions.length) {
     return (
-      <div>
+      <div className="container">
         <h1>QUIZ 20^ CORSO V. ISP.</h1>
-        <label>Numero domande:
-          <select value={numQuestions} onChange={e => setNumQuestions(Number(e.target.value))}>
-            {[10, 20, 50, 100, 200].map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </label><br/>
-        <label>Tempo (minuti):
-          <select value={timeLimit / 60} onChange={e => setTimeLimit(Number(e.target.value) * 60)}>
-            {[...Array(10)].map((_, i) => {
-              const min = (i + 1) * 10;
-              return <option key={min} value={min}>{min}</option>;
-            })}
-          </select>
-        </label><br/>
         <button onClick={startQuiz}>Inizia Test</button>
       </div>
     )
   }
 
-  if (!selectedQuestions.length) return <p>Caricamento…</p>
-
   if (showResult) {
+    const score = selectedQuestions.length - mistakes.length
     const percent = ((score / selectedQuestions.length) * 100).toFixed(2)
     return (
-      <div>
+      <div className="container">
         <h1>Hai totalizzato {score} su {selectedQuestions.length} ({percent}%)</h1>
-        <button onClick={downloadResult}>Scarica risultato</button>
-        <button onClick={() => setShowSetup(true)}>Ricomincia</button>
-        <h2>Rivedi le risposte sbagliate:</h2>
-        {mistakes.map((m, i) => (
-          <div key={i}>
-            <p><strong>❌ Domanda {m.index}</strong></p>
-            <p>{m.domanda}</p>
-            <p>❌ Tua risposta: {m.tua}</p>
-            <p>✅ Corretta: {m.corretta}</p>
-          </div>
-        ))}
+        <button onClick={startQuiz}>Ricomincia</button>
+        <div className="scroll-container">
+          {mistakes.map((m, i) => (
+            <div key={i} className="card">
+              <p><strong>❌ Domanda {m.index}</strong></p>
+              <p>{m.domanda}</p>
+              <p><strong>Tua risposta:</strong> {m.tua || 'Nessuna risposta'}</p>
+              <p><strong>Corretta:</strong> {m.corretta}</p>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
 
   const q = selectedQuestions[step]
+
   return (
-    <div>
-      <h1>Domanda {step + 1} / {selectedQuestions.length}</h1>
-      <p><strong>{q.domanda}</strong></p>
-      <div>
-        {['A', 'B', 'C'].map(k => (
-          <div key={k} style={{ marginBottom: '10px' }}>
-            <button style={{ display: 'block' }} onClick={() => handleAnswer(k)}>
-              {k}) {q['risposta' + k]}
+    <div className="container">
+      <div className="card">
+        <div className="question">Domanda {step + 1}: {q.Domanda}</div>
+        {["A", "B", "C"].map(letter => (
+          <div key={letter} className="answer">
+            <button
+              onClick={() => selectAnswer(letter)}
+              style={{
+                backgroundColor: answers[step] === letter ? '#cce5ff' : 'white',
+                width: '100%',
+                textAlign: 'left',
+                padding: '10px',
+                fontSize: '1.1rem',
+                border: '1px solid #ccc',
+                borderRadius: '5px',
+                marginBottom: '0.5rem'
+              }}
+            >
+              {letter}) {q["Risposta_" + letter]}
             </button>
           </div>
         ))}
+        <div>
+          <button onClick={() => setStep(prev => prev - 1)} disabled={step === 0}>⬅ Indietro</button>
+          {step < selectedQuestions.length - 1 ? (
+            <button onClick={() => setStep(prev => prev + 1)}>Avanti ➡</button>
+          ) : (
+            <button onClick={calculateResult}>Concludi Test</button>
+          )}
+        </div>
       </div>
-      <p>Tempo rimanente: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</p>
     </div>
   )
 }
