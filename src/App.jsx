@@ -9,7 +9,10 @@ function App() {
   const [step, setStep] = useState(0)
   const [showResult, setShowResult] = useState(false)
   const [mistakes, setMistakes] = useState([])
-  const [locked, setLocked] = useState(false)
+  const [quizStarted, setQuizStarted] = useState(false)
+  const [numQuestions, setNumQuestions] = useState(10)
+  const [timeLimit, setTimeLimit] = useState(10)
+  const [timer, setTimer] = useState(0)
 
   useEffect(() => {
     fetch('/quiz_domande_200.csv')
@@ -24,22 +27,31 @@ function App() {
       })
   }, [])
 
+  useEffect(() => {
+    if (quizStarted && timer > 0) {
+      const countdown = setInterval(() => setTimer(t => t - 1), 1000)
+      return () => clearInterval(countdown)
+    }
+    if (timer === 0 && quizStarted) {
+      calculateResult()
+    }
+  }, [timer, quizStarted])
+
   const startQuiz = () => {
-    const shuffled = [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, 10)
+    const shuffled = [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, numQuestions)
     setSelectedQuestions(shuffled)
     setAnswers(Array(shuffled.length).fill(null))
     setStep(0)
     setShowResult(false)
     setMistakes([])
-    setLocked(false)
+    setTimer(timeLimit * 60)
+    setQuizStarted(true)
   }
 
   const handleAnswer = (letter) => {
-    if (locked) return
     const updated = [...answers]
     updated[step] = letter
     setAnswers(updated)
-    setLocked(true)
   }
 
   const calculateResult = () => {
@@ -61,10 +73,26 @@ function App() {
     setShowResult(true)
   }
 
-  if (!selectedQuestions.length) {
+  if (!quizStarted) {
     return (
       <div className="container">
         <h1>QUIZ 20^ CORSO V. ISP.</h1>
+        <label>Numero domande:
+          <select value={numQuestions} onChange={(e) => setNumQuestions(Number(e.target.value))}>
+            {[...Array(10)].map((_, i) => (
+              <option key={i} value={(i + 1) * 10}>{(i + 1) * 10}</option>
+            ))}
+          </select>
+        </label>
+        <br />
+        <label>Timer (minuti):
+          <select value={timeLimit} onChange={(e) => setTimeLimit(Number(e.target.value))}>
+            {[...Array(10)].map((_, i) => (
+              <option key={i} value={(i + 1) * 10}>{(i + 1) * 10}</option>
+            ))}
+          </select>
+        </label>
+        <br /><br />
         <button onClick={startQuiz}>Inizia Test</button>
       </div>
     )
@@ -76,7 +104,7 @@ function App() {
     return (
       <div className="container">
         <h1>Hai totalizzato {score} su {selectedQuestions.length} ({percent}%)</h1>
-        <button onClick={startQuiz}>Ricomincia</button>
+        <button onClick={() => setQuizStarted(false)}>Ricomincia</button>
         <div className="scroll-container">
           {mistakes.map((m, i) => (
             <div key={i} className="card">
@@ -99,27 +127,26 @@ function App() {
     <div className="container">
       <div className="card">
         <div className="question">Domanda {step + 1}: {q.Domanda}</div>
+        <div style={{ marginBottom: '1rem', fontWeight: 'bold' }}>⏱️ Tempo rimasto: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</div>
         {["A", "B", "C"].map(letter => {
           const isCorrect = letter === q.Corretta
           const isSelected = userAnswer === letter
-          const style = {
-            backgroundColor:
-              userAnswer
-                ? isCorrect ? '#d4edda' : (isSelected ? '#f8d7da' : 'white')
-                : 'white',
-            width: '100%',
-            textAlign: 'left',
-            padding: '10px',
-            fontSize: '1.1rem',
-            border: '1px solid #ccc',
-            borderRadius: '5px',
-            marginBottom: '0.5rem',
-            cursor: locked ? 'default' : 'pointer'
-          }
+          const baseColor = isSelected ? (isCorrect ? '#28a745' : '#dc3545') : (userAnswer && isCorrect ? '#28a745' : 'white')
           return (
             <div key={letter} className="answer">
               <button
-                style={style}
+                style={{
+                  backgroundColor: baseColor,
+                  color: baseColor !== 'white' ? 'white' : 'black',
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '10px',
+                  fontSize: '1.2rem',
+                  border: '1px solid #ccc',
+                  borderRadius: '5px',
+                  marginBottom: '0.5rem',
+                  cursor: 'pointer'
+                }}
                 onClick={() => handleAnswer(letter)}
               >
                 {letter}) {q["Risposta_" + letter]}
@@ -128,11 +155,11 @@ function App() {
           )
         })}
         <div>
-          <button onClick={() => { setStep(prev => prev - 1); setLocked(false); }} disabled={step === 0}>⬅ Indietro</button>
+          <button onClick={() => setStep(prev => prev - 1)} disabled={step === 0}>⬅ Indietro</button>
           {isLast ? (
             <button onClick={calculateResult}>✅ RISULTATI</button>
           ) : (
-            <button onClick={() => { setStep(prev => prev + 1); setLocked(false); }} disabled={!userAnswer}>Avanti ➡</button>
+            <button onClick={() => setStep(prev => prev + 1)} disabled={answers[step] === null}>Avanti ➡</button>
           )}
         </div>
       </div>
