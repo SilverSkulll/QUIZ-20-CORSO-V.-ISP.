@@ -43,3 +43,14 @@ button:disabled {
   background-color: #fff;
   border-radius: 10px;
 }
+
+.selected {
+  background-color: #cce5ff;
+  border: 2px solid #339af0;
+}
+
+.card.answer {
+  margin-bottom: 10px;
+  padding: 12px;
+  transition: background-color 0.3s, border 0.3s;
+}

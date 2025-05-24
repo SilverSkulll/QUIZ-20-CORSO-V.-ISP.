@@ -205,13 +205,14 @@ function App() {
       <div className="card">
         <p><strong>{current.Numero}. {current.Domanda}</strong></p>
         {['A', 'B', 'C'].map((opt) => (
-          <p
+          <div
             key={opt}
+            className={userAnswer === opt ? 'answer selected card' : 'answer card'}
             onClick={() => handleAnswer(opt)}
-            className={userAnswer === opt ? 'selected' : ''}
+            style={{ cursor: 'pointer' }}
           >
             {opt}) {current[opt]}
-          </p>
+          </div>
         ))}
         <div className="navigation">
           <button disabled={step === 0} onClick={() => setStep(step - 1)}>⬅️ Indietro</button>
