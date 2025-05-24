@@ -23,11 +23,10 @@ function App() {
     fetch('/quiz_domande_200.csv')
       .then(res => res.text())
       .then(csv => {
-        console.log('CSV caricato correttamente');
         Papa.parse(csv, {
           header: true,
           complete: results => {
-            const clean = results.data.filter(q => q.Numero && q.Domanda && q.A && q.B && q.C && q.Corretta && typeof q.Corretta === 'string');
+            const clean = results.data.filter(q => q.Numero && q.Domanda && q.A && q.B && q.C && q.Corretta);
             setAllQuestions(clean);
           }
         });
@@ -37,8 +36,7 @@ function App() {
   useEffect(() => {
     if (started && timer > 0 && !showResult) {
       const countdown = setInterval(() => setTimer(t => t - 1), 1000);
-      const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
-  return () => clearInterval(countdown);
+      return () => clearInterval(countdown);
     }
     if (timer === 0 && started && !showResult) {
       handleFinish();
@@ -106,8 +104,7 @@ function App() {
   if (!started) {
     const hasRepeat = getRepeatQuestions().length > 0;
 
-    const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
-  return (
+    return (
       <div className="container">
         <div className="card">
           <h1>QUIZ 20^ CORSO V. ISP.</h1>
@@ -142,20 +139,7 @@ function App() {
           {hasRepeat && (
             <div>
               <label>
-                
-<input
-  type="checkbox"
-  checked={checkedRepeat}
-  onChange={(e) => {
-    const current = JSON.parse(localStorage.getItem("toRepeat") || "[]");
-    const updated = e.target.checked
-      ? [...new Set([...current, q.Numero])]
-      : current.filter(n => n !== q.Numero);
-    localStorage.setItem("toRepeat", JSON.stringify(updated));
-    setCheckedRepeat(e.target.checked);
-  }}
-/>
-
+                <input type="checkbox" checked={repeatOnly} onChange={(e) => setRepeatOnly(e.target.checked)} />
                 Solo domande da ripassare
               </label>
             </div>
@@ -168,15 +152,13 @@ function App() {
   }
 
   if (showResult && reviewMode) {
-    const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
-  return (
+    return (
       <div className="container">
         <h2>📘 RIVEDI IL TEST</h2>
         {selectedQuestions.map((q, i) => {
           const userAnswer = answers[i];
           const correct = q.Corretta.trim().toUpperCase();
-          const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
-  return (
+          return (
             <div key={i} className="card">
               <p><strong>{q.Numero}. {q.Domanda}</strong></p>
               {['A', 'B', 'C'].map((opt) => (
@@ -191,20 +173,15 @@ function App() {
                 </p>
               ))}
               <label>
-                
-<input
-  type="checkbox"
-  checked={checkedRepeat}
-  onChange={(e) => {
-    const current = JSON.parse(localStorage.getItem("toRepeat") || "[]");
-    const updated = e.target.checked
-      ? [...new Set([...current, q.Numero])]
-      : current.filter(n => n !== q.Numero);
-    localStorage.setItem("toRepeat", JSON.stringify(updated));
-    setCheckedRepeat(e.target.checked);
-  }}
-/>
-
+                <input type="checkbox"
+                       checked={JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero)}
+                       onChange={(e) => {
+                         const current = JSON.parse(localStorage.getItem("toRepeat") || "[]");
+                         const updated = e.target.checked
+                           ? [...new Set([...current, q.Numero])]
+                           : current.filter(n => n !== q.Numero);
+                         localStorage.setItem("toRepeat", JSON.stringify(updated));
+                       }} />
                 🔖 Domanda da ripassare
               </label>
             </div>
@@ -218,8 +195,7 @@ function App() {
 
   if (showResult && !reviewMode) {
     const correctCount = selectedQuestions.filter((q, i) => q.Corretta.trim().toUpperCase() === answers[i]).length;
-    const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
-  return (
+    return (
       <div className="container">
         <h2>Test completato!</h2>
         <p>Hai risposto correttamente a {correctCount} su {selectedQuestions.length} domande.</p>
@@ -232,7 +208,6 @@ function App() {
   const current = selectedQuestions[step];
   const userAnswer = answers[step];
 
-  const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
   return (
     <div className="container">
       <div className="card">
