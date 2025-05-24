@@ -23,10 +23,11 @@ function App() {
     fetch('/quiz_domande_200.csv')
       .then(res => res.text())
       .then(csv => {
+        console.log('CSV caricato correttamente');
         Papa.parse(csv, {
           header: true,
           complete: results => {
-            const clean = results.data.filter(q => q.Numero && q.Domanda && q.A && q.B && q.C && q.Corretta);
+            const clean = results.data.filter(q => q.Numero && q.Domanda && q.A && q.B && q.C && q.Corretta && typeof q.Corretta === 'string');
             setAllQuestions(clean);
           }
         });
