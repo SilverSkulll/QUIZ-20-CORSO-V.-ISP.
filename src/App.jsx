@@ -20,7 +20,7 @@ function App() {
   const [repeatOnly, setRepeatOnly] = useState(false);
 
   useEffect(() => {
-    fetch('/quiz_domande_200.csv')
+    fetch(import.meta.env.BASE_URL + 'quiz_domande_200.csv')
       .then(res => res.text())
       .then(csv => {
         Papa.parse(csv, {
