@@ -13,6 +13,9 @@ function App() {
   const [timeLimit, setTimeLimit] = useState(10)
   const [timer, setTimer] = useState(0)
   const [started, setStarted] = useState(false)
+  const [orderMode, setOrderMode] = useState("random")
+  const [startIndex, setStartIndex] = useState(1)
+  const [endIndex, setEndIndex] = useState(10)
 
   useEffect(() => {
     fetch('/quiz_domande_200.csv')
@@ -21,8 +24,8 @@ function App() {
         Papa.parse(csv, {
           header: true,
           complete: results => {
-            const filtered = results.data.filter(q => q.Domanda && q.Risposta_A && q.Risposta_B && q.Risposta_C && q.Corretta)
-            setAllQuestions(filtered)
+            const clean = results.data.filter(q => q.Numero && q.Domanda && q.A && q.B && q.C && q.Corretta)
+            setAllQuestions(clean)
           }
         })
       })
@@ -39,9 +42,18 @@ function App() {
   }, [timer, started, showResult])
 
   const startQuiz = () => {
-    const shuffled = [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, numQuestions)
-    setSelectedQuestions(shuffled)
-    setAnswers(Array(shuffled.length).fill(null))
+    let questions = []
+    if (orderMode === "random") {
+      questions = [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, numQuestions)
+    } else {
+      questions = allQuestions.filter(q => {
+        const n = parseInt(q.Numero)
+        return n >= startIndex && n <= endIndex
+      })
+    }
+
+    setSelectedQuestions(questions)
+    setAnswers(Array(questions.length).fill(null))
     setStep(0)
     setTimer(timeLimit * 60)
     setStarted(true)
@@ -64,7 +76,7 @@ function App() {
           <h1>QUIZ 20^ CORSO V. ISP.</h1>
           <label>Numero domande:
             <select value={numQuestions} onChange={(e) => setNumQuestions(Number(e.target.value))}>
-              {[...Array(20)].map((_, i) => (
+              {[...Array(30)].map((_, i) => (
                 <option key={i} value={(i + 1) * 10}>{(i + 1) * 10}</option>
               ))}
             </select>
@@ -78,6 +90,23 @@ function App() {
             </select>
           </label>
           <br /><br />
+          <label>Ordine domande:
+            <select value={orderMode} onChange={(e) => setOrderMode(e.target.value)}>
+              <option value="random">Randomico</option>
+              <option value="original">Originale (intervallo)</option>
+            </select>
+          </label>
+          {orderMode === "original" && (
+            <div>
+              <label>Da domanda n°:
+                <input type="number" value={startIndex} onChange={(e) => setStartIndex(Number(e.target.value))} min="1" max="300" />
+              </label>
+              <label> a n°:
+                <input type="number" value={endIndex} onChange={(e) => setEndIndex(Number(e.target.value))} min="1" max="300" />
+              </label>
+            </div>
+          )}
+          <br />
           <button onClick={startQuiz}>Inizia Test</button>
         </div>
       </div>
@@ -91,7 +120,7 @@ function App() {
         <div className="scroll-container">
           {selectedQuestions.map((q, idx) => (
             <div key={idx} className="card">
-              <div className="question">Domanda {idx + 1}: {q.Domanda}</div>
+              <div className="question">Domanda {q.Numero}: {q.Domanda}</div>
               {["A", "B", "C"].map(letter => {
                 const isCorrect = letter === q.Corretta
                 const isGiven = answers[idx] === letter
@@ -101,7 +130,7 @@ function App() {
                       fontWeight: 'bold',
                       color: isCorrect ? 'green' : (isGiven ? 'red' : 'black')
                     }}>
-                      {letter}) {q["Risposta_" + letter]}
+                      {letter}) {q[letter]}
                       {isCorrect ? ' ✅' : ''}{isGiven && !isCorrect ? ' ❌' : ''}
                     </span>
                   </div>
@@ -134,7 +163,7 @@ function App() {
   return (
     <div className="container">
       <div className="card">
-        <div className="question">Domanda {step + 1}: {q.Domanda}</div>
+        <div className="question">Domanda {q.Numero}: {q.Domanda}</div>
         <div style={{ marginBottom: '1rem', fontWeight: 'bold' }}>
           ⏱️ Tempo: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}
         </div>
@@ -158,7 +187,7 @@ function App() {
                 }}
                 onClick={() => handleAnswer(letter)}
               >
-                {letter}) {q["Risposta_" + letter]}
+                {letter}) {q[letter]}
               </button>
             </div>
           )
