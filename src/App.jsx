@@ -173,7 +173,15 @@ function App() {
                 </p>
               ))}
               <label>
-                <input type="checkbox" onChange={() => handleRepeatFlag(q.Numero)} />
+                <input type="checkbox"
+                       checked={JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero)}
+                       onChange={(e) => {
+                         const current = JSON.parse(localStorage.getItem("toRepeat") || "[]");
+                         const updated = e.target.checked
+                           ? [...new Set([...current, q.Numero])]
+                           : current.filter(n => n !== q.Numero);
+                         localStorage.setItem("toRepeat", JSON.stringify(updated));
+                       }} />
                 🔖 Domanda da ripassare
               </label>
             </div>
@@ -208,7 +216,9 @@ function App() {
           <div
             key={opt}
             className={userAnswer === opt ? 'answer selected card' : 'answer card'}
-            onClick={() => handleAnswer(opt)}
+            onClick={() => {
+              if (!showResult) handleAnswer(opt)
+          }}
             style={{ cursor: 'pointer' }}
           >
             {opt}) {current[opt]}

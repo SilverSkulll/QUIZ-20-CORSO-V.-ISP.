@@ -54,3 +54,20 @@ button:disabled {
   padding: 12px;
   transition: background-color 0.3s, border 0.3s;
 }
+
+.correct {
+  background-color: #28a745 !important;
+  color: white;
+  font-weight: bold;
+}
+
+.wrong {
+  background-color: #dc3545 !important;
+  color: white;
+  font-weight: bold;
+}
+
+.answer.card:hover {
+  background-color: #f0f0f0;
+  cursor: pointer;
+}
