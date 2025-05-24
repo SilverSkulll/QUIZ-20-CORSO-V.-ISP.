@@ -71,3 +71,15 @@ button:disabled {
   background-color: #f0f0f0;
   cursor: pointer;
 }
+
+.correct {
+  background-color: #28a745 !important;
+  color: white;
+  font-weight: bold;
+}
+
+.wrong {
+  background-color: #dc3545 !important;
+  color: white;
+  font-weight: bold;
+}
