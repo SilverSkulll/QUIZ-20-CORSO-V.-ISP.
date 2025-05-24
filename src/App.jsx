@@ -36,7 +36,9 @@ function App() {
   useEffect(() => {
     if (started && timer > 0 && !showResult) {
       const countdown = setInterval(() => setTimer(t => t - 1), 1000);
-      return () => clearInterval(countdown);
+      const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
+
+  return () => clearInterval(countdown);
     }
     if (timer === 0 && started && !showResult) {
       handleFinish();
@@ -104,7 +106,9 @@ function App() {
   if (!started) {
     const hasRepeat = getRepeatQuestions().length > 0;
 
-    return (
+    const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
+
+  return (
       <div className="container">
         <div className="card">
           <h1>QUIZ 20^ CORSO V. ISP.</h1>
@@ -139,7 +143,20 @@ function App() {
           {hasRepeat && (
             <div>
               <label>
-                <input type="checkbox" checked={repeatOnly} onChange={(e) => setRepeatOnly(e.target.checked)} />
+                
+    <input
+      type="checkbox"
+      checked={checkedRepeat}
+      onChange={(e) => {
+        const current = JSON.parse(localStorage.getItem("toRepeat") || "[]");
+        const updated = e.target.checked
+          ? [...new Set([...current, q.Numero])]
+          : current.filter(n => n !== q.Numero);
+        localStorage.setItem("toRepeat", JSON.stringify(updated));
+        setCheckedRepeat(e.target.checked);
+      }}
+    />
+    
                 Solo domande da ripassare
               </label>
             </div>
@@ -152,13 +169,17 @@ function App() {
   }
 
   if (showResult && reviewMode) {
-    return (
+    const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
+
+  return (
       <div className="container">
         <h2>📘 RIVEDI IL TEST</h2>
         {selectedQuestions.map((q, i) => {
           const userAnswer = answers[i];
           const correct = q.Corretta.trim().toUpperCase();
-          return (
+          const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
+
+  return (
             <div key={i} className="card">
               <p><strong>{q.Numero}. {q.Domanda}</strong></p>
               {['A', 'B', 'C'].map((opt) => (
@@ -195,7 +216,9 @@ function App() {
 
   if (showResult && !reviewMode) {
     const correctCount = selectedQuestions.filter((q, i) => q.Corretta.trim().toUpperCase() === answers[i]).length;
-    return (
+    const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
+
+  return (
       <div className="container">
         <h2>Test completato!</h2>
         <p>Hai risposto correttamente a {correctCount} su {selectedQuestions.length} domande.</p>
@@ -208,22 +231,37 @@ function App() {
   const current = selectedQuestions[step];
   const userAnswer = answers[step];
 
+  const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
+
   return (
     <div className="container">
       <div className="card">
         <p><strong>{current.Numero}. {current.Domanda}</strong></p>
-        {['A', 'B', 'C'].map((opt) => (
-          <div
-            key={opt}
-            className={userAnswer === opt ? 'answer selected card' : 'answer card'}
-            onClick={() => {
-              if (!showResult) handleAnswer(opt)
-          }}
-            style={{ cursor: 'pointer' }}
-          >
-            {opt}) {current[opt]}
-          </div>
-        ))}
+        {['A', 'B', 'C'].map((opt) => {
+          const correct = current.Corretta.trim().toUpperCase();
+          let className = 'answer card';
+          if (userAnswer) {
+            if (opt === correct) className += ' correct';
+            if (opt === userAnswer && opt !== correct) className += ' wrong';
+          } else if (userAnswer === opt) {
+            className += ' selected';
+          }
+
+          const [checkedRepeat, setCheckedRepeat] = useState(JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero));
+
+  return (
+            <div
+              key={opt}
+              className={className}
+              onClick={() => {
+                if (!showResult) handleAnswer(opt)
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              {opt}) {current[opt]}
+            </div>
+          );
+        })}
         <div className="navigation">
           <button disabled={step === 0} onClick={() => setStep(step - 1)}>⬅️ Indietro</button>
           {step < selectedQuestions.length - 1 ? (
