@@ -101,6 +101,8 @@ function App() {
   };
 
   const current = selectedQuestions[step];
+  console.log('Domanda corrente:', current);
+  if (!current) return null;
   const userAnswer = answers[step];
 
   return (
