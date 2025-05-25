@@ -101,6 +101,7 @@ function App() {
   };
 
   const current = selectedQuestions[step];
+  if (!current) return null;
   const userAnswer = answers[step];
 
   return (
