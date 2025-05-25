@@ -112,7 +112,7 @@ export default function App() {
   const correct = q.Corretta;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div className="p-6 max-w-3xl mx-auto flex flex-col items-center justify-center min-h-screen">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Domanda {currentIndex + 1} / {quizData.length}</h2>
         <div className="text-red-600 font-semibold">⏱ {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</div>
@@ -120,7 +120,7 @@ export default function App() {
       <div className="bg-white p-4 rounded shadow mb-4">
         <p className="font-semibold mb-4">{q.Numero}. {q.Domanda}</p>
         {['A', 'B', 'C'].map(opt => (
-          <div key={opt} onClick={() => handleAnswer(opt)} className={`cursor-pointer border p-2 rounded mb-2 ${sel === opt ? (opt === correct ? 'bg-green-300' : 'bg-red-300') : sel && opt === correct ? 'bg-green-200' : 'bg-gray-100'}`}>
+          <div key={opt} onClick={() => handleAnswer(opt)} role='button' tabIndex='0' onKeyDown={(e) => e.key === 'Enter' && handleAnswer(opt)} className={`cursor-pointer border p-4 rounded-xl shadow-md text-center text-lg font-medium mb-4 ${sel === opt ? (opt === correct ? 'bg-green-300' : 'bg-red-300') : sel && opt === correct ? 'bg-green-200' : 'bg-gray-100'}`}>
             {opt}) {q[opt]}
           </div>
         ))}
