@@ -105,8 +105,16 @@ function App() {
         <div className="quiz-screen">
           <h3>Domanda {step + 1}/{selectedQuestions.length}</h3>
           <p><strong>{current?.Domanda}</strong></p>
-          {['A', 'B', 'C'].map(opt => {
+          
+{['A', 'B', 'C'].map(opt => {
             const value = current?.[opt];
+            let className = "option";
+            if (userAnswer) {
+              if (opt === userAnswer && userAnswer === correct) className += " correct";
+              else if (opt === userAnswer && userAnswer !== correct) className += " wrong";
+              if (opt === correct && userAnswer !== correct) className += " correct";
+            }
+            
             let className = "option";
             if (userAnswer) {
               if (opt === userAnswer && userAnswer === correct) className += " correct";
