@@ -1,0 +1,73 @@
+
+body {
+  font-family: Cambria, serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f6f8;
+}
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 2rem;
+}
+.card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+button {
+  font-size: 1.1rem;
+  padding: 0.5rem 1rem;
+  margin: 0.5rem;
+}
+button:disabled {
+  opacity: 0.5;
+}
+.question {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+.answer {
+  font-size: 1.1rem;
+  text-align: left;
+  margin-bottom: 0.5rem;
+}
+.scroll-container {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  background-color: #fff;
+  border-radius: 10px;
+}
+
+.selected {
+  background-color: #cce5ff;
+  border: 2px solid #339af0;
+}
+
+.card.answer {
+  margin-bottom: 10px;
+  padding: 12px;
+  transition: background-color 0.3s, border 0.3s;
+}
+
+.correct {
+  background-color: #28a745 !important;
+  color: white;
+  font-weight: bold;
+}
+
+.wrong {
+  background-color: #dc3545 !important;
+  color: white;
+  font-weight: bold;
+}
+
+.answer.card:hover {
+  background-color: #f0f0f0;
+  cursor: pointer;
+}
