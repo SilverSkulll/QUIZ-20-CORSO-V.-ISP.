@@ -1,5 +1,5 @@
 {
-  "name": "quiz-v9",
+  "name": "quiz320",
   "version": "1.0.0",
   "scripts": {
     "dev": "vite",
@@ -8,11 +8,10 @@
   },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "papaparse": "^5.4.1"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.0.0",
-    "vite": "^4.5.0"
+    "vite": "^4.0.0",
+    "@vitejs/plugin-react": "^4.0.0"
   }
 }
