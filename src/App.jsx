@@ -109,13 +109,13 @@ function App() {
 {['A', 'B', 'C'].map(opt => {
             const value = current?.[opt];
            
-    let className = "option";
+    className = = "option";
     if (userAnswer) {
       if (opt === userAnswer && userAnswer === correct) className += " correct";
       else if (opt === userAnswer && userAnswer !== correct) className += " wrong";
       if (opt === correct && userAnswer !== correct) className += " correct";
     }
- let className = "option";
+ className = = "option";
             if (userAnswer) {
               if (opt === userAnswer && userAnswer === correct) className += " correct";
               else if (opt === userAnswer && userAnswer !== correct) className += " wrong";
@@ -127,6 +127,11 @@ function App() {
               if (opt === userAnswer && userAnswer === correct) className += " correct";
               else if (opt === userAnswer && userAnswer !== correct) className += " wrong";
               if (opt === correct && userAnswer !== correct) className += " correct";
+            }
+            if (userAnswer) {
+              if (opt === userAnswer && userAnswer === correct) className += ' correct';
+              else if (opt === userAnswer && userAnswer !== correct) className += ' wrong';
+              if (opt === correct && userAnswer !== correct) className += ' correct';
             }
             if (userAnswer) {
               if (opt === userAnswer && userAnswer === correct) className += ' correct';
