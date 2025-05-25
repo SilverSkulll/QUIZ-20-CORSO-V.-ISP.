@@ -18,6 +18,7 @@ function App() {
   const [startIndex, setStartIndex] = useState(1);
   const [endIndex, setEndIndex] = useState(10);
   const [repeatOnly, setRepeatOnly] = useState(false);
+  const [answered, setAnswered] = useState({});
 
   useEffect(() => {
     fetch('/quiz_domande_200.csv')
@@ -41,199 +42,122 @@ function App() {
     if (timer === 0 && started && !showResult) {
       handleFinish();
     }
-  }, [timer, started, showResult]);
+  }, [started, timer, showResult]);
 
-  const getRepeatQuestions = () => {
-    const stored = localStorage.getItem("toRepeat");
-    if (!stored) return [];
-    const parsed = JSON.parse(stored);
-    return allQuestions.filter(q => parsed.includes(q.Numero));
-  };
-
-  const startQuiz = () => {
-    let questions = [];
-    if (repeatOnly) {
-      const repeats = getRepeatQuestions();
-      questions = repeats.sort(() => 0.5 - Math.random()).slice(0, numQuestions);
-    } else if (orderMode === "random") {
-      questions = [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, numQuestions);
+  const startTest = () => {
+    let questions = [...allQuestions];
+    if (orderMode === "random") {
+      questions = questions.sort(() => 0.5 - Math.random());
     } else {
-      questions = allQuestions.filter(q => {
-        const n = parseInt(q.Numero);
-        return n >= startIndex && n <= endIndex;
-      });
+      questions = questions.slice(startIndex - 1, endIndex);
     }
-
-    setSelectedQuestions(questions);
-    setAnswers(Array(questions.length).fill(null));
+    setSelectedQuestions(questions.slice(0, numQuestions));
+    setAnswers([]);
     setStep(0);
-    setTimer(timeLimit * 60);
-    setStarted(true);
     setShowResult(false);
-    setReviewMode(false);
+    setStarted(true);
+    setTimer(timeLimit * 60);
+    setAnswered({});
   };
 
-  const handleAnswer = (letter) => {
-    const updated = [...answers];
-    updated[step] = letter;
-    setAnswers(updated);
+  const handleAnswer = (answer) => {
+    if (answered[step]) return;
+    const correct = selectedQuestions[step].Corretta;
+    setAnswers([...answers, answer]);
+    setAnswered({ ...answered, [step]: answer });
   };
 
   const handleFinish = () => {
     setShowResult(true);
   };
 
-  const handleRepeatFlag = (numero) => {
-    const current = JSON.parse(localStorage.getItem("toRepeat") || "[]");
-    if (!current.includes(numero)) {
-      current.push(numero);
-      localStorage.setItem("toRepeat", JSON.stringify(current));
-    }
-  };
-
-  const resetQuiz = () => {
-    setStarted(false);
-    setRepeatOnly(false);
-    setStep(0);
-    setAnswers([]);
-    setSelectedQuestions([]);
-    setShowResult(false);
-    setReviewMode(false);
-  };
-
-  if (!started) {
-    const hasRepeat = getRepeatQuestions().length > 0;
-
-    return (
-      <div className="container">
-        <div className="card">
-          <h1>QUIZ 20^ CORSO V. ISP.</h1>
-          <label>Numero domande:
-            <select value={numQuestions} onChange={(e) => setNumQuestions(Number(e.target.value))}>
-              {[...Array(30)].map((_, i) => (
-                <option key={i} value={(i + 1) * 10}>{(i + 1) * 10}</option>
-              ))}
-            </select>
-          </label>
-          <br /><br />
-          <label>Timer (minuti):
-            <select value={timeLimit} onChange={(e) => setTimeLimit(Number(e.target.value))}>
-              {[...Array(10)].map((_, i) => (
-                <option key={i} value={(i + 1) * 10}>{(i + 1) * 10}</option>
-              ))}
-            </select>
-          </label>
-          <br /><br />
-          <label>Ordine domande:
-            <select value={orderMode} onChange={(e) => setOrderMode(e.target.value)}>
-              <option value="random">Casuale</option>
-              <option value="range">Intervallo</option>
-            </select>
-          </label>
-          {orderMode === "range" && (
-            <div>
-              <input type="number" placeholder="Da..." value={startIndex} onChange={(e) => setStartIndex(Number(e.target.value))} />
-              <input type="number" placeholder="A..." value={endIndex} onChange={(e) => setEndIndex(Number(e.target.value))} />
-            </div>
-          )}
-          {hasRepeat && (
-            <div>
-              <label>
-                <input type="checkbox" checked={repeatOnly} onChange={(e) => setRepeatOnly(e.target.checked)} />
-                Solo domande da ripassare
-              </label>
-            </div>
-          )}
-          <br />
-          <button onClick={startQuiz}>Inizia il test</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (showResult && reviewMode) {
-    return (
-      <div className="container">
-        <h2>📘 RIVEDI IL TEST</h2>
-        {selectedQuestions.map((q, i) => {
-          const userAnswer = answers[i];
-          const correct = q.Corretta.trim().toUpperCase();
-          return (
-            <div key={i} className="card">
-              <p><strong>{q.Numero}. {q.Domanda}</strong></p>
-              {['A', 'B', 'C'].map((opt) => (
-                <p
-                  key={opt}
-                  className={
-                    userAnswer === opt && opt !== correct ? 'wrong' :
-                    opt === correct ? 'correct' : ''
-                  }
-                >
-                  {opt}) {q[opt]}
-                </p>
-              ))}
-              <label>
-                <input type="checkbox"
-                       checked={JSON.parse(localStorage.getItem("toRepeat") || "[]").includes(q.Numero)}
-                       onChange={(e) => {
-                         const current = JSON.parse(localStorage.getItem("toRepeat") || "[]");
-                         const updated = e.target.checked
-                           ? [...new Set([...current, q.Numero])]
-                           : current.filter(n => n !== q.Numero);
-                         localStorage.setItem("toRepeat", JSON.stringify(updated));
-                       }} />
-                🔖 Domanda da ripassare
-              </label>
-            </div>
-          );
-        })}
-        <br />
-        <button onClick={resetQuiz}>🔁 Ricomincia il test</button>
-      </div>
-    );
-  }
-
-  if (showResult && !reviewMode) {
-    const correctCount = selectedQuestions.filter((q, i) => q.Corretta.trim().toUpperCase() === answers[i]).length;
-    return (
-      <div className="container">
-        <h2>Test completato!</h2>
-        <p>Hai risposto correttamente a {correctCount} su {selectedQuestions.length} domande.</p>
-        <p>Percentuale: {Math.round((correctCount / selectedQuestions.length) * 100)}%</p>
-        <button onClick={() => setReviewMode(true)}>📘 RIVEDI IL TEST</button>
-      </div>
-    );
-  }
-
   const current = selectedQuestions[step];
-  const userAnswer = answers[step];
+  const correct = current?.Corretta;
+  const userAnswer = answered[step];
 
   return (
     <div className="container">
-      <div className="card">
-        <p><strong>{current.Numero}. {current.Domanda}</strong></p>
-        {['A', 'B', 'C'].map((opt) => (
-          <div
-            key={opt}
-            className={userAnswer === opt ? 'answer selected card' : 'answer card'}
-            onClick={() => {
-              if (!showResult) handleAnswer(opt)
-          }}
-            style={{ cursor: 'pointer' }}
-          >
-            {opt}) {current[opt]}
-          </div>
-        ))}
-        <div className="navigation">
-          <button disabled={step === 0} onClick={() => setStep(step - 1)}>⬅️ Indietro</button>
-          {step < selectedQuestions.length - 1 ? (
-            <button onClick={() => setStep(step + 1)}>➡️ Avanti</button>
-          ) : (
-            <button onClick={handleFinish}>✅ RISULTATI</button>
+      {!started ? (
+        <div className="start-screen">
+          <h2>QUIZ 20<sup>a</sup> CORSO V. ISP.</h2>
+          <label>Numero Domande: <input type="number" value={numQuestions} onChange={e => setNumQuestions(parseInt(e.target.value))} /></label>
+          <label>Tempo (minuti): <input type="number" value={timeLimit} onChange={e => setTimeLimit(parseInt(e.target.value))} /></label>
+          <label>Ordine: 
+            <select value={orderMode} onChange={e => setOrderMode(e.target.value)}>
+              <option value="random">Casuale</option>
+              <option value="original">Originale</option>
+            </select>
+          </label>
+          {orderMode === "original" && (
+            <>
+              <label>Da: <input type="number" value={startIndex} onChange={e => setStartIndex(parseInt(e.target.value))} /></label>
+              <label>A: <input type="number" value={endIndex} onChange={e => setEndIndex(parseInt(e.target.value))} /></label>
+            </>
           )}
+          <button onClick={startTest}>Inizia</button>
         </div>
-        <p>⏱️ Tempo rimasto: {Math.floor(timer / 60)}:{('0' + (timer % 60)).slice(-2)}</p>
-      </div>
+      ) : showResult ? (
+        <div className="result-screen">
+          <h2>Risultati</h2>
+          <p>Corrette: {answers.filter((a, i) => a === selectedQuestions[i].Corretta).length} su {selectedQuestions.length}</p>
+        </div>
+      ) : (
+        <div className="quiz-screen">
+          <h3>Domanda {step + 1}/{selectedQuestions.length}</h3>
+          <p><strong>{current?.Domanda}</strong></p>
+          
+{['A', 'B', 'C'].map(opt => {
+            const value = current?.[opt];
+           
+    className = = "option";
+    if (userAnswer) {
+      if (opt === userAnswer && userAnswer === correct) className += " correct";
+      else if (opt === userAnswer && userAnswer !== correct) className += " wrong";
+      if (opt === correct && userAnswer !== correct) className += " correct";
+    }
+ className = = "option";
+            if (userAnswer) {
+              if (opt === userAnswer && userAnswer === correct) className += " correct";
+              else if (opt === userAnswer && userAnswer !== correct) className += " wrong";
+              if (opt === correct && userAnswer !== correct) className += " correct";
+            }
+            
+            
+            if (userAnswer) {
+              if (opt === userAnswer && userAnswer === correct) className += " correct";
+              else if (opt === userAnswer && userAnswer !== correct) className += " wrong";
+              if (opt === correct && userAnswer !== correct) className += " correct";
+            }
+            if (userAnswer) {
+              if (opt === userAnswer && userAnswer === correct) className += ' correct';
+              else if (opt === userAnswer && userAnswer !== correct) className += ' wrong';
+              if (opt === correct && userAnswer !== correct) className += ' correct';
+            }
+            if (userAnswer) {
+              if (opt === userAnswer && userAnswer === correct) className += ' correct';
+              else if (opt === userAnswer && userAnswer !== correct) className += ' wrong';
+              if (opt === correct && userAnswer !== correct) className += ' correct';
+            }
+            let className = 'option';
+            if (userAnswer) {
+              if (opt === userAnswer && userAnswer === correct) className += ' correct';
+              else if (opt === userAnswer && userAnswer !== correct) className += ' wrong';
+              if (opt === correct && userAnswer !== correct) className += ' correct';
+            }
+            return (
+              <div key={opt} className={className} onClick={() => handleAnswer(opt)}>
+                <strong>{opt}.</strong> {value}
+              </div>
+            );
+          })}
+          <div className="nav-buttons">
+            {step > 0 && <button onClick={() => setStep(step - 1)}>Indietro</button>}
+            {step < selectedQuestions.length - 1 && <button onClick={() => setStep(step + 1)}>Avanti</button>}
+            {step === selectedQuestions.length - 1 && <button onClick={handleFinish}>RISULTATI</button>}
+          </div>
+          <p>Tempo rimasto: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</p>
+        </div>
+      )}
     </div>
   );
 }
