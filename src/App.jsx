@@ -83,13 +83,13 @@ export default function App() {
   if (showResults || currentIndex >= quizData.length) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4">📘 Riepilogo del test</h2>
+        <h2 className="text-2xl font-bold mb-4 text-center">📘 Riepilogo del test</h2>
         {quizData.map((q, i) => {
           const corr = q.Corretta;
           const user = selectedAnswers[i];
           const isCorrect = user === corr;
           return (
-            <div key={i} className="mb-4 p-4 rounded border bg-white shadow">
+            <div key={i} className="mb-4 p-6 rounded-xl border bg-white shadow-md">
               <p className="font-semibold mb-2">{q.Numero}. {q.Domanda}</p>
               <p>✅ Corretta: {q[corr]}</p>
               <p className={!isCorrect ? 'text-red-600' : 'text-green-600'}>
@@ -102,7 +102,9 @@ export default function App() {
             </div>
           );
         })}
-        <button onClick={() => setSettings(null)} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded">🔁 Torna alla schermata iniziale</button>
+        <div className="text-center">
+          <button onClick={() => setSettings(null)} className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-xl shadow">🔁 Torna alla schermata iniziale</button>
+        </div>
       </div>
     );
   }
@@ -112,25 +114,49 @@ export default function App() {
   const correct = q.Corretta;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto flex flex-col items-center justify-center min-h-screen">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Domanda {currentIndex + 1} / {quizData.length}</h2>
-        <div className="text-red-600 font-semibold">⏱ {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</div>
+    <div className="p-6 max-w-3xl mx-auto min-h-screen flex flex-col items-center justify-center">
+      <div className="w-full mb-4 text-center">
+        <h2 className="text-2xl font-bold mb-2">Domanda {currentIndex + 1} / {quizData.length}</h2>
+        <div className="text-red-600 font-semibold text-lg">⏱ {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')}</div>
       </div>
-      <div className="bg-white p-4 rounded shadow mb-4">
-        <p className="font-semibold mb-4">{q.Numero}. {q.Domanda}</p>
-        {['A', 'B', 'C'].map(opt => (
-          <div key={opt} onClick={() => handleAnswer(opt)} role='button' tabIndex='0' onKeyDown={(e) => e.key === 'Enter' && handleAnswer(opt)} className={`cursor-pointer border p-4 rounded-xl shadow-md text-center text-lg font-medium mb-4 ${sel === opt ? (opt === correct ? 'bg-green-300' : 'bg-red-300') : sel && opt === correct ? 'bg-green-200' : 'bg-gray-100'}`}>
-            {opt}) {q[opt]}
-          </div>
-        ))}
+      <div className="bg-white w-full p-6 rounded-xl shadow-lg mb-6 text-center">
+        <p className="text-lg font-semibold mb-6">{q.Numero}. {q.Domanda}</p>
+        {['A', 'B', 'C'].map(opt => {
+          const base = "w-full mb-3 px-6 py-4 rounded-xl text-left border text-lg font-medium cursor-pointer ";
+          const isSelected = sel === opt;
+          const isCorrect = opt === correct;
+          const className =
+            isSelected && isCorrect ? base + "bg-green-400 text-white" :
+            isSelected && !isCorrect ? base + "bg-red-400 text-white" :
+            sel && isCorrect ? base + "bg-green-100" :
+            base + "bg-gray-100 hover:bg-gray-200";
+
+          return (
+            <div
+              key={opt}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleAnswer(opt)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAnswer(opt)}
+              className={className}
+            >
+              {opt}) {q[opt]}
+            </div>
+          );
+        })}
       </div>
-      <div className="flex justify-between">
-        <button onClick={() => setCurrentIndex(currentIndex - 1)} disabled={currentIndex === 0} className="px-4 py-2 bg-gray-400 text-white rounded">◀ Indietro</button>
+      <div className="w-full flex justify-between">
+        <button onClick={() => setCurrentIndex(currentIndex - 1)} disabled={currentIndex === 0} className="px-6 py-3 bg-gray-400 text-white rounded-xl shadow disabled:opacity-50">
+          ◀ Indietro
+        </button>
         {currentIndex < quizData.length - 1 ? (
-          <button onClick={() => setCurrentIndex(currentIndex + 1)} className="px-4 py-2 bg-blue-600 text-white rounded">Avanti ▶</button>
+          <button onClick={() => setCurrentIndex(currentIndex + 1)} className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow">
+            Avanti ▶
+          </button>
         ) : (
-          <button onClick={() => setShowResults(true)} className="px-4 py-2 bg-green-600 text-white rounded">✅ Concludi</button>
+          <button onClick={() => setShowResults(true)} className="px-6 py-3 bg-green-600 text-white rounded-xl shadow">
+            ✅ Concludi
+          </button>
         )}
       </div>
     </div>
