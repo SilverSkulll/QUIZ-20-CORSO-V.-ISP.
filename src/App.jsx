@@ -138,6 +138,12 @@ function App() {
               else if (opt === userAnswer && userAnswer !== correct) className += ' wrong';
               if (opt === correct && userAnswer !== correct) className += ' correct';
             }
+            let className = 'option';
+            if (userAnswer) {
+              if (opt === userAnswer && userAnswer === correct) className += ' correct';
+              else if (opt === userAnswer && userAnswer !== correct) className += ' wrong';
+              if (opt === correct && userAnswer !== correct) className += ' correct';
+            }
             return (
               <div key={opt} className={className} onClick={() => handleAnswer(opt)}>
                 <strong>{opt}.</strong> {value}
